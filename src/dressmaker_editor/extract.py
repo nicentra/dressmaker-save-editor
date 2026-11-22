@@ -235,7 +235,7 @@ def _raw_name_and_guid(obj) -> dict[str, Any] | None:
         pos += 12  # m_Script
         name, pos = _read_aligned_string(data, pos)
         guid, _ = _read_aligned_string(data, pos)
-    except (struct.error, UnicodeDecodeError, IndexError):
+    except struct.error, UnicodeDecodeError, IndexError:
         return None
     if len(guid) != 32:
         return None

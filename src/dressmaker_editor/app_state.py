@@ -27,7 +27,7 @@ class Settings:
     def load(cls, path: Path) -> Settings:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
+        except OSError, ValueError:
             data = {}
         if not isinstance(data, dict):
             data = {}

@@ -125,7 +125,7 @@ class SaveFolder:
         if cache is None:
             try:
                 cache = self.build_cache(self.read(slot))
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 cache = {}
         info.player_name = cache.get("playerName")
         prestige = cache.get("prestige")
@@ -138,7 +138,7 @@ class SaveFolder:
     def _read_cache(self, slot: int) -> dict[str, Any] | None:
         try:
             cache = gamejson.loads(self.cache_path(slot).read_bytes().decode("utf-8"))
-        except (OSError, ValueError, UnicodeDecodeError):
+        except OSError, ValueError, UnicodeDecodeError:
             return None
         return cache if isinstance(cache, dict) else None
 
@@ -184,7 +184,7 @@ class SaveFolder:
                 continue
             try:
                 found |= SaveData.load(path).loaded_guids
-            except (OSError, ValueError, UnicodeDecodeError):
+            except OSError, ValueError, UnicodeDecodeError:
                 continue
         return frozenset(found)
 
@@ -431,7 +431,7 @@ class BackupStore:
             save = SaveData.load(source)
             info["player_name"] = save.player_name
             info["prestige"] = save.prestige
-        except (OSError, ValueError):
+        except OSError, ValueError:
             pass
         (target / "backup.json").write_bytes(json.dumps(info, indent=2).encode("utf-8"))
         self.prune()
@@ -448,7 +448,7 @@ class BackupStore:
             try:
                 info = json.loads(meta.read_text(encoding="utf-8"))
                 created = datetime.fromisoformat(info["created"])
-            except (OSError, ValueError, KeyError):
+            except OSError, ValueError, KeyError:
                 continue
             out.append(
                 Backup(

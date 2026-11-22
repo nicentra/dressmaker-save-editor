@@ -14,6 +14,6 @@ def full_version() -> str:
 
     try:
         build = resources.files("dressmaker_editor.data").joinpath("build.txt").read_text().strip()
-    except (OSError, ModuleNotFoundError):
+    except OSError, ModuleNotFoundError:
         build = ""
     return f"{__version__}+{build}" if build else __version__
