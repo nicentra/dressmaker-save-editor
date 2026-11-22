@@ -33,6 +33,9 @@ repository.
   that conversations set.
 - **Replay side commissions.** Clear any side or gift commission so the
   messenger pigeon brings it again, or mark commissions as done.
+- **Story check.** Spots progress that normal play can't reach (a side
+  commission done before the one that unlocks it, a gap in the main story, a
+  commission listed twice) and fixes it in one click.
 - **Gold and prestige.** Set them to anything, or jump straight to the top rank.
 
 ## Safe by design

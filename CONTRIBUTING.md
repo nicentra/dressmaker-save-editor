@@ -12,8 +12,27 @@ Tests run anywhere. Tests marked `game` also run against your own Dressmaker
 install and saves when they exist: they round-trip every real save byte for
 byte. Set `QT_QPA_PLATFORM=offscreen` to run the GUI tests without a display.
 
-Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/);
-release-please turns them into versions and the changelog. PRs are squash-merged.
+Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/).
+PRs are squash-merged, so the PR title becomes the commit on `main`.
+
+## Versions and releases
+
+Versions follow [Semantic Versioning](https://semver.org/), and nobody sets
+them by hand: release-please reads the commits on `main` and keeps a release PR
+open with the next version and its changelog.
+
+| Commit | Version change | For this app that means |
+|---|---|---|
+| `fix:`, `perf:` | patch, 1.0.0 → 1.0.1 | a bug fix, nothing new to learn |
+| `feat:` | minor, 1.0.0 → 1.1.0 | something new you can do |
+| `feat!:` / `BREAKING CHANGE:` | major, 1.0.0 → 2.0.0 | something that used to work no longer does, e.g. older exports or backups can't be imported, a feature is removed, or settings move |
+| `docs:`, `chore:`, `ci:`, `test:`, `refactor:`, `build:` | none | |
+
+Merging the release PR tags `vX.Y.Z`, publishes the GitHub release and attaches
+`DressmakerSaveEditor.exe`. Every merge to `main` also replaces the `dev`
+pre-release; those builds report `X.Y.Z+dev.<commit>` (semver build metadata),
+so a development build never passes for a release. The version is shown in
+Help → About and in the executable's file properties.
 
 ## Layout
 
