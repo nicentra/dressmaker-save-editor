@@ -69,7 +69,9 @@ class Banner(QFrame):
         self.label = QLabel()
         self.label.setWordWrap(True)
         self.label.setTextFormat(Qt.TextFormat.RichText)
-        self.label.setOpenExternalLinks(True)
+        self.label.setOpenExternalLinks(False)
+        self.label.linkActivated.connect(self._link)
+        self.on_link = None
         layout = QHBoxLayout(self)
         layout.setContentsMargins(12, 8, 12, 8)
         layout.addWidget(self.label)
@@ -87,6 +89,10 @@ class Banner(QFrame):
         self.label.clear()
         self.hide()
 
+    def _link(self, href: str) -> None:
+        if self.on_link is not None:
+            self.on_link(href)
+
 
 class BannerStack(QWidget):
     """Several independent banners stacked on top of each other."""
@@ -98,12 +104,13 @@ class BannerStack(QWidget):
         self._layout.setSpacing(6)
         self._banners: dict[str, Banner] = {}
 
-    def set(self, key: str, kind: str | None, html: str = "") -> None:
+    def set(self, key: str, kind: str | None, html: str = "", on_link=None) -> None:
         banner = self._banners.get(key)
         if banner is None:
             banner = Banner(self)
             self._banners[key] = banner
             self._layout.addWidget(banner)
+        banner.on_link = on_link
         if kind is None:
             banner.clear()
         else:

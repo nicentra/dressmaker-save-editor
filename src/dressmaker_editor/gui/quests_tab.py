@@ -163,6 +163,20 @@ class QuestsTab(QWidget):
         targets = [g for g, s in self._selected() if s is not Status.COMPLETED]
         if not targets:
             return
+        locked = [g for g, s in self._selected() if s is Status.LOCKED]
+        if locked:
+            names = ", ".join(self.catalog.pretty(g) for g in locked[:5])
+            more = f" and {len(locked) - 5} more" if len(locked) > 5 else ""
+            verb = "are" if len(locked) > 1 else "is"
+            if not confirm(
+                self,
+                "Mark locked commissions done",
+                f"{names}{more} {verb} not unlocked in this save's story yet. Mark done anyway?",
+                "Mark done",
+                "Normal play can't get there, so the story check will list them until the "
+                "commissions that unlock them are done too.",
+            ):
+                return
         story = Story(self.save, self.catalog)
         for guid in targets:
             story.complete(guid, pay_rewards=self.pay_rewards.isChecked())

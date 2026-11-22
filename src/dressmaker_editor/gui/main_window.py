@@ -26,12 +26,13 @@ from PySide6.QtWidgets import (
 
 from .. import __version__
 from ..app_state import AppState
+from ..checks import story_issues
 from ..gamedata import LoadedCatalog
 from ..process import game_is_running
 from ..savefile import SaveData
 from ..slots import SLOT_COUNT, InvalidSaveError, SaveError, read_import, slot_label
 from ..validate import errors, validate
-from .dialogs import BackupsDialog, SlotPickerDialog, show_issues
+from .dialogs import BackupsDialog, SlotPickerDialog, StoryCheckDialog, show_issues
 from .overview_tab import OverviewTab
 from .quests_tab import QuestsTab
 from .story_tab import StoryTab
@@ -418,6 +419,7 @@ class MainWindow(QMainWindow):
             for tab in (self.overview, self.story, self.quests):
                 tab.load(save, catalog)
             self._show_editor(True)
+        self._update_story_check()
         self._update_actions()
         self._update_title()
 
@@ -432,8 +434,32 @@ class MainWindow(QMainWindow):
         self.doc.dirty = True
         for tab in (self.overview, self.story, self.quests):
             tab.refresh()
+        self._update_story_check()
         self._update_actions()
         self._update_title()
+
+    def _update_story_check(self) -> None:
+        catalog = self.state.catalog
+        issues = story_issues(self.doc.save, catalog) if self.doc and catalog else []
+        if not issues:
+            self.banners.set("story", None)
+            return
+        count = len(issues)
+        self.banners.set(
+            "story",
+            "info",
+            f"<b>Story check:</b> {count} thing{'s' if count > 1 else ''} in this save "
+            "couldn't happen in normal play. <a href='#story-check'>Review and fix…</a>",
+            on_link=lambda _href: self.review_story(),
+        )
+
+    def review_story(self) -> None:
+        if self.doc is None or self.state.catalog is None:
+            return
+        dialog = StoryCheckDialog(self, self.doc.save, self.state.catalog)
+        dialog.exec()
+        if dialog.changed:
+            self._edited()
 
     # ── game running ──────────────────────────────────────────────────────
     def _check_game(self) -> None:

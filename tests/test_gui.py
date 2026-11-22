@@ -120,3 +120,28 @@ def test_discarding_really_drops_the_edits(window, folder, monkeypatch):
     assert window.doc.save.gold == original
     assert not window.doc.dirty
     assert window.overview.gold.value() == original
+
+
+def test_story_check_banner_and_fix_all(window, catalog):
+    from dressmaker_editor.gui.dialogs import StoryCheckDialog
+
+    window.slot_list.setCurrentRow(1)
+    window.story.clear_locked.setChecked(False)
+    window.story.table.selectRow(5)  # back before the side commission's unlock
+    window.story._jump_to_selected()
+    banner = window.banners._banners["story"]
+    assert not banner.isHidden() and "Story check" in banner.label.text()
+    dialog = StoryCheckDialog(window, window.doc.save, catalog)
+    dialog._fix_all()
+    assert dialog.changed
+    window._edited()
+    assert banner.isHidden()
+
+
+def test_marking_a_locked_commission_done_asks_first(window, monkeypatch):
+    window.slot_list.setCurrentRow(0)  # fresh game: every side commission is locked
+    monkeypatch.setattr(quests_tab, "confirm", lambda *a, **k: False)
+    item = window.quests.tree.topLevelItem(0).child(0)
+    item.setSelected(True)
+    window.quests._complete()
+    assert not window.doc.dirty

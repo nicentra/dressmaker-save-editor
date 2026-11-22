@@ -73,6 +73,10 @@ class StoryTab(QWidget):
         self.pay_rewards = QCheckBox(
             "Pay out the gold, prestige and friendship of commissions marked done"
         )
+        self.clear_locked = QCheckBox(
+            "When going back, also clear side and gift commissions that aren't unlocked any more"
+        )
+        self.clear_locked.setChecked(True)
         buttons = QHBoxLayout()
         buttons.addWidget(self.jump_button)
         buttons.addWidget(self.finish_button)
@@ -81,8 +85,7 @@ class StoryTab(QWidget):
         help_text = QLabel(
             "Pick a commission and continue from it: every main commission before it is "
             "marked done (with a plain white stand-in dress), and it and everything after "
-            "it are cleared so the front desk offers them again. Side commissions are not "
-            "touched."
+            "it are cleared so the front desk offers them again."
         )
         help_text.setWordWrap(True)
         help_text.setStyleSheet("color: palette(placeholder-text);")
@@ -94,6 +97,7 @@ class StoryTab(QWidget):
         main_layout.addWidget(self.table, 1)
         main_layout.addLayout(buttons)
         main_layout.addWidget(self.pay_rewards)
+        main_layout.addWidget(self.clear_locked)
         main_layout.addWidget(help_text)
 
         self.flags_box = QGroupBox("Story flags")
@@ -217,9 +221,11 @@ class StoryTab(QWidget):
 
     def _jump(self, position: int) -> None:
         story = Story(self.save, self.catalog)
-        preview = Story(self.save.copy(), self.catalog).jump_to(
-            position, pay_rewards=self.pay_rewards.isChecked()
-        )
+        options = {
+            "pay_rewards": self.pay_rewards.isChecked(),
+            "clear_locked": self.clear_locked.isChecked(),
+        }
+        preview = Story(self.save.copy(), self.catalog).jump_to(position, **options)
         if not preview:
             return
         details = []
@@ -246,7 +252,7 @@ class StoryTab(QWidget):
             "\n\n".join(details) + "\n\nNothing is written until you save.",
         ):
             return
-        story.jump_to(position, pay_rewards=self.pay_rewards.isChecked())
+        story.jump_to(position, **options)
         self.table.clearSelection()
         self.edited.emit()
 
