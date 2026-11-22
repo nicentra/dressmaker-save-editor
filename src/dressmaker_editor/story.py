@@ -244,27 +244,45 @@ class Story:
             rows.append(row)
         return rows
 
+    def is_unlocked(self, guid: str) -> bool:
+        """Whether the game could offer this side or gift quest right now.
+
+        Side quests need the messenger pigeon and their own requirements; gift
+        quests need gifting. Main quests count as unlocked.
+        """
+        if guid in self.catalog.side_quests:
+            feature: str | None = "pigeon"
+        elif guid in self.catalog.gift_quests:
+            feature = "gifting"
+        else:
+            return True
+        return self.feature_unlocked(feature) and self.requirements_met(guid)
+
     def side_rows(self) -> list[QuestRow]:
-        pigeon = self.feature_unlocked("pigeon")
         rows = []
         for guid in self.side_quests():
             row = self._row(guid, "side", unlocked_by=self._unlocking_quest(guid))
-            if row.status is Status.LOCKED and pigeon and self.requirements_met(guid):
+            if row.status is Status.LOCKED and self.is_unlocked(guid):
                 row.status = Status.AVAILABLE
             rows.append(row)
         return rows
 
     def gift_rows(self) -> list[QuestRow]:
-        gifting = self.feature_unlocked("gifting")
         unlock = self.catalog.unlock("gifting") or {}
         rows = []
         for guid in self.catalog.gift_quests:
             row = self._row(guid, "gift", unlocked_by=unlock.get("quest"))
-            if row.status is Status.LOCKED and gifting and self.requirements_met(guid):
+            if row.status is Status.LOCKED and self.is_unlocked(guid):
                 row.status = Status.AVAILABLE
             rows.append(row)
         rows.sort(key=lambda r: r.client)
         return rows
+
+    def unlocked_by(self, guid: str) -> str | None:
+        """The main quest that has to be done before this side or gift quest."""
+        if guid in self.catalog.gift_quests:
+            return (self.catalog.unlock("gifting") or {}).get("quest")
+        return self._unlocking_quest(guid)
 
     def side_quests(self) -> list[str]:
         return self.catalog.side_quests
@@ -277,12 +295,16 @@ class Story:
         return None
 
     # ── changing progress ─────────────────────────────────────────────────
-    def jump_to(self, position: int, *, pay_rewards: bool = False) -> Changes:
+    def jump_to(
+        self, position: int, *, pay_rewards: bool = False, clear_locked: bool = False
+    ) -> Changes:
         """Make the story continue from ``position`` (see :meth:`position`).
 
         Main quests before it are completed (with placeholder dresses unless
         they already were), the ones from it onwards are cleared so the game
-        hands them out again. Side and gift quests are left alone.
+        hands them out again. Side and gift quests are left alone unless
+        ``clear_locked`` is set; then the ones that are no longer unlocked
+        (after jumping backwards) are cleared too.
         """
         position = max(0, min(position, self.finished_position))
         changes = Changes()
@@ -301,7 +323,25 @@ class Story:
         for guid in targets:
             if not self.is_completed(guid):
                 self._complete(guid, SUCCEEDED, pay_rewards, changes)
+        if clear_locked:
+            changes.removed.extend(self.clear_locked())
         return changes
+
+    def locked_but_started(self) -> list[str]:
+        """Side and gift quests that are done or in progress but not unlocked."""
+        return [
+            guid
+            for guid in (*self.catalog.side_quests, *self.catalog.gift_quests)
+            if (self.is_completed(guid) or self.is_active(guid)) and not self.is_unlocked(guid)
+        ]
+
+    def clear_locked(self) -> list[str]:
+        """Clear side and gift quests the story hasn't unlocked yet."""
+        cleared = []
+        for guid in self.locked_but_started():
+            if self.reset(guid):
+                cleared.append(guid)
+        return cleared
 
     def complete(
         self, guid: str, outcome: str = SUCCEEDED, *, pay_rewards: bool = False
