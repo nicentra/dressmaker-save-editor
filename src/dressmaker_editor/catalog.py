@@ -58,7 +58,7 @@ class Catalog:
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(path.suffix + ".tmp")
-        tmp.write_text(json.dumps(self.data, indent=1, sort_keys=True), encoding="utf-8")
+        tmp.write_bytes(json.dumps(self.data, indent=1, sort_keys=True).encode("utf-8"))
         tmp.replace(path)
 
     @property

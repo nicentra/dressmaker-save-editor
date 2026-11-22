@@ -355,7 +355,7 @@ class BackupStore:
             info["prestige"] = save.prestige
         except (OSError, ValueError):
             pass
-        (target / "backup.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
+        (target / "backup.json").write_bytes(json.dumps(info, indent=2).encode("utf-8"))
         self.prune()
         return target
 
