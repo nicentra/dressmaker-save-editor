@@ -18,6 +18,7 @@ dressmaker-save-editor = "dressmaker_editor.__main__:main"
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.7.0",
     "pytest>=8.3",
     "ruff>=0.8",
 ]
