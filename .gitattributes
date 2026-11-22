@@ -1,0 +1,8 @@
+# Keep LF everywhere so checkouts on Windows (core.autocrlf=true) match CI.
+* text=auto eol=lf
+
+# Save files and other fixtures must stay byte-for-byte identical to what the
+# game wrote: the round-trip tests compare them exactly.
+tests/fixtures/** -text
+*.png binary
+*.ico binary
