@@ -11,6 +11,10 @@ Get **[DressmakerSaveEditor.exe](https://github.com/nicentra/dressmaker-save-edi
 from the [latest release](https://github.com/nicentra/dressmaker-save-editor/releases/latest)
 and double-click it. Nothing to install.
 
+Want the newest changes before they're released? The
+[development build](https://github.com/nicentra/dressmaker-save-editor/releases/download/dev/DressmakerSaveEditor.exe)
+is rebuilt from every change that passes the tests.
+
 Windows may warn that the app is from an unknown publisher because it isn't
 code-signed. Click **More info → Run anyway**. Every release is built by
 [GitHub Actions](.github/workflows/release-please.yml) from the code in this

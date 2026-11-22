@@ -36,3 +36,34 @@ jobs:
   build:
     name: Build
     uses: ./.github/workflows/build.yml
+
+  # Every merge to main replaces the "dev" pre-release with the new build, so
+  # the newest code is always one download away. Versioned releases (from the
+  # release PR) are attached separately by release-please.yml, and GitHub's
+  # "latest release" link skips pre-releases, so it keeps pointing at those.
+  publish-dev-build:
+    name: Publish development build
+    needs: [checks, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-dev-build
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: DressmakerSaveEditor-windows
+      - name: Replace the development pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete dev --cleanup-tag --yes --repo "$GITHUB_REPOSITORY" || true
+          built="$(date -u '+%Y-%m-%d %H:%M UTC')"
+          gh release create dev DressmakerSaveEditor.exe \
+            --repo "$GITHUB_REPOSITORY" \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Development build" \
+            --notes "Built automatically from ${GITHUB_SHA::7} on main ($built). It has the newest changes but isn't a release yet; for everyday use, download the latest release instead."
