@@ -73,11 +73,13 @@ def test_refuses_while_game_runs(folder, backups, catalog):
 
 
 def _with_photo(folder, slot: int, guid: str) -> None:
+    from dressmaker_editor.catalog import Catalog
+
     save = folder.read(slot)
     save.completed_quests[0]["thumbnailGuid"] = guid
     folder.thumbnails_dir.mkdir(exist_ok=True)
     folder.thumbnail_path(guid).write_bytes(PNG)
-    folder.write(slot, save, catalog=None, backups=None, reason="setup")
+    folder.write(slot, save, catalog=Catalog.bundled(), backups=None, reason="setup")
 
 
 def test_copy_slot_gives_photos_new_names(folder, backups, catalog):
@@ -161,8 +163,57 @@ def test_strict_catalog_rejects_unknown_items_in_imports(folder, backups, catalo
         folder.import_file(_with_unknown_item(tmp_path), 2, catalog=strict, backups=backups)
 
 
-def test_bundled_catalog_trusts_items_the_file_already_had(folder, backups, catalog, tmp_path):
+def test_bundled_catalog_trusts_items_already_in_the_folder(folder, backups, catalog, tmp_path):
     # The bundled catalog may be older than the game; the game wrote those items.
     assert catalog.is_bundled
-    folder.import_file(_with_unknown_item(tmp_path), 2, catalog=catalog, backups=backups)
-    assert "FromANewerGame" in folder.slot_path(2).read_text(encoding="utf-8")
+    newer = _with_unknown_item(tmp_path)
+    folder.slot_path(2).write_bytes(newer.read_bytes())
+    save = folder.read(2)
+    save.gold = 1
+    folder.write(2, save, catalog=catalog, backups=backups, reason="edit")
+    assert folder.read(2).gold == 1
+
+
+def test_bundled_catalog_does_not_trust_imported_items(folder, backups, catalog, tmp_path):
+    # An import may come from a newer game than the one installed here.
+    with pytest.raises(InvalidSaveError):
+        folder.import_file(_with_unknown_item(tmp_path), 2, catalog=catalog, backups=backups)
+
+
+def test_refused_copy_leaves_no_photos_behind(folder, backups, catalog):
+    _with_photo(folder, 1, "c" * 32)
+    before = set(folder.thumbnails_dir.iterdir())
+    with pytest.raises(GameRunningError):
+        folder.copy_slot(1, 2, catalog=catalog, backups=backups, is_game_running=lambda: True)
+    assert set(folder.thumbnails_dir.iterdir()) == before
+
+
+def test_failed_write_removes_copied_photos(folder, backups, catalog, monkeypatch):
+    _with_photo(folder, 1, "d" * 32)
+    before = set(folder.thumbnails_dir.iterdir())
+
+    def broken(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr("dressmaker_editor.slots.atomic_write", _fail_on_save(broken))
+    with pytest.raises(OSError):
+        folder.copy_slot(1, 2, catalog=catalog, backups=backups)
+    assert set(folder.thumbnails_dir.iterdir()) == before
+
+
+def _fail_on_save(fail):
+    from dressmaker_editor import slots
+
+    real = slots.atomic_write
+
+    def write(path, data):
+        if path.suffix == ".json":
+            fail()
+        real(path, data)
+
+    return write
+
+
+def test_writing_needs_game_data(folder, backups):
+    with pytest.raises(SaveError):
+        folder.write(0, folder.read(0), catalog=None, backups=backups, reason="edit")
