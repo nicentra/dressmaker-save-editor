@@ -1,0 +1,84 @@
+# Install once per clone (commit and push hooks):
+#   uv run pre-commit install
+# Run everything by hand:
+#   uv run pre-commit run --all-files
+#
+# Save fixtures and the bundled game data are byte-exact copies of what the
+# game writes (tab-only lines, no final newline, the game's own spelling), so
+# fixers and spell checks skip them.
+exclude: ^(tests/fixtures/|src/dressmaker_editor/data/.*\.json$)
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+default_language_version:
+  python: python3.15  # hooks parse our code, so they need its Python version
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: fix-byte-order-marker
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-ast
+      - id: debug-statements
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-illegal-windows-names
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: forbid-submodules
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.27
+    hooks:
+      - id: validate-pyproject
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.6
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.13.9
+    hooks:
+      - id: uv-lock
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.52.2
+    hooks:
+      - id: typos
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.39.0
+    hooks:
+      - id: check-github-workflows
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.32.0
+    hooks:
+      - id: zizmor
+
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

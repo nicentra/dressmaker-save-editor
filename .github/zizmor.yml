@@ -1,0 +1,6 @@
+# zizmor (GitHub Actions security lint) runs as a pre-commit hook.
+rules:
+  # Local reusable workflows use GitHub's documented "./.github/workflows/…"
+  # form; there is no security difference for a workflow in the same repo.
+  self-repository:
+    disable: true

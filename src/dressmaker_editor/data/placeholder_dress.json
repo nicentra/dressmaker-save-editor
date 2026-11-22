@@ -1,0 +1,131 @@
+{
+	"collarDefinition" : "fbaaa5afe2cdf28449bd53d642ce12a1,No Collar",
+	"bodiceDefinition" : "ce2ed64a931dc6b4ebae6d3407f6b2a8,Wrap Bodice",
+	"sleeveDefinition" : "51afc50eab56c394da65580ea45ad8b3,No Sleeves",
+	"skirtDefinition" : "81b295144f93a374e9ef840847db78d8,Circle Skirt",
+	"bodiceVariant" : 0,
+	"skirtVariant" : 0,
+	"collarVariant" : 0,
+	"sleeveVariant" : 0,
+	"mannequinDisplayColor" : "eed45779c815d8b85b4775bf0ecdaa5a,Beige",
+	"panelStates" : 
+	[
+		{
+			"hasBeenCut" : true,
+			"placedOnMannequin" : true,
+			"hasBeenStitched" : true,
+			"grainQuality" : 99.7281189,
+			"cutPos" : "0.2683131,0.4294595,-0.007714286",
+			"cutRotation" : "0.0,0.0,0.7153083,-0.698809",
+			"fabric" : "fe4923c2e8582e8478682e1b7e8719a1,CottonWhite",
+			"cutoutActive" : false
+		},
+		{
+			"hasBeenCut" : true,
+			"placedOnMannequin" : true,
+			"hasBeenStitched" : true,
+			"grainQuality" : 99.743042,
+			"cutPos" : "0.848044,-0.08191025,-0.009",
+			"cutRotation" : "0.0,0.0,0.3931373,0.9194798",
+			"fabric" : "fe4923c2e8582e8478682e1b7e8719a1,CottonWhite",
+			"cutoutActive" : false
+		},
+		{
+			"hasBeenCut" : true,
+			"placedOnMannequin" : true,
+			"hasBeenStitched" : true,
+			"grainQuality" : 99.9364777,
+			"cutPos" : "1.6227254,-0.06498579,-0.01",
+			"cutRotation" : "0.0,0.0,0.3878861,-0.9217073",
+			"fabric" : "fe4923c2e8582e8478682e1b7e8719a1,CottonWhite",
+			"cutoutActive" : false
+		},
+		{
+			"hasBeenCut" : true,
+			"placedOnMannequin" : true,
+			"hasBeenStitched" : true,
+			"grainQuality" : 74.5776596,
+			"cutPos" : "1.242043,-0.3257533,-0.003857143",
+			"cutRotation" : "0.0,0.0,-0.01680113,-0.9998589",
+			"fabric" : "fe4923c2e8582e8478682e1b7e8719a1,CottonWhite",
+			"cutoutActive" : false
+		},
+		{
+			"hasBeenCut" : true,
+			"placedOnMannequin" : true,
+			"hasBeenStitched" : true,
+			"grainQuality" : 74.9406662,
+			"cutPos" : "2.7774467,-0.3099364,-0.006428571",
+			"cutRotation" : "0.0,0.0,-0.006292151,-0.9999802",
+			"fabric" : "fe4923c2e8582e8478682e1b7e8719a1,CottonWhite",
+			"cutoutActive" : false
+		},
+		{
+			"hasBeenCut" : true,
+			"placedOnMannequin" : true,
+			"hasBeenStitched" : true,
+			"grainQuality" : 74.6884613,
+			"cutPos" : "1.992269,-0.3064974,-0.005142857",
+			"cutRotation" : "0.0,0.0,0.01442508,0.999896",
+			"fabric" : "fe4923c2e8582e8478682e1b7e8719a1,CottonWhite",
+			"cutoutActive" : false
+		},
+		{
+			"hasBeenCut" : true,
+			"placedOnMannequin" : true,
+			"hasBeenStitched" : true,
+			"grainQuality" : 74.6465836,
+			"cutPos" : "0.4747032,-0.3028961,-0.002571428",
+			"cutRotation" : "0.0,0.0,-0.01536628,-0.999882",
+			"fabric" : "fe4923c2e8582e8478682e1b7e8719a1,CottonWhite",
+			"cutoutActive" : false
+		}
+	],
+	"joinStates" : 
+	[
+		{
+			"hasBeenStitched" : true,
+			"accuracy" : 100.0
+		},
+		{
+			"hasBeenStitched" : true,
+			"accuracy" : 100.0
+		},
+		{
+			"hasBeenStitched" : true,
+			"accuracy" : 100.0
+		},
+		{
+			"hasBeenStitched" : true,
+			"accuracy" : 100.0
+		},
+		{
+			"hasBeenStitched" : true,
+			"accuracy" : 100.0
+		},
+		{
+			"hasBeenStitched" : true,
+			"accuracy" : 100.0
+		},
+		{
+			"hasBeenStitched" : true,
+			"accuracy" : 100.0
+		},
+		{
+			"hasBeenStitched" : true,
+			"accuracy" : 100.0
+		}
+	],
+	"accessoryStates" : 
+	[
+		
+	],
+	"measurements" : 
+	{
+		"bust" : 0.5,
+		"waist" : 0.5,
+		"hips" : 0.5
+	},
+	"sewingComplete" : true,
+	"finished" : true
+}
