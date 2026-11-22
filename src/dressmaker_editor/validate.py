@@ -70,13 +70,20 @@ def errors(issues: list[Issue]) -> list[Issue]:
     return [i for i in issues if i.severity == ERROR]
 
 
-def validate(tree: Any, catalog: Catalog | None) -> list[Issue]:
+def validate(
+    tree: Any, catalog: Catalog | None, trusted: frozenset[str] = frozenset()
+) -> list[Issue]:
+    """List everything the game would reject.
+
+    ``trusted`` guids count as known even if the catalog lacks them; pass the
+    guids the save already had when the catalog may be older than the game.
+    """
     issues: list[Issue] = []
     if not isinstance(tree, dict):
         return [Issue(ERROR, "(file)", "a save file must be a JSON object")]
 
     for path, value in _walk(tree, ""):
-        issues.extend(_check_value(path, value, catalog))
+        issues.extend(_check_value(path, value, catalog, trusted))
 
     for name in _INT_FIELDS:
         if name in tree and not _is_int(tree[name]):
@@ -108,7 +115,9 @@ class _BadKey(str):
     pass
 
 
-def _check_value(path: str, value: Any, catalog: Catalog | None) -> Iterator[Issue]:
+def _check_value(
+    path: str, value: Any, catalog: Catalog | None, trusted: frozenset[str]
+) -> Iterator[Issue]:
     if isinstance(value, _BadKey):
         yield Issue(
             ERROR, path, "field names can't contain quotes, backslashes or control characters"
@@ -128,7 +137,7 @@ def _check_value(path: str, value: Any, catalog: Catalog | None) -> Iterator[Iss
         if not gamejson.is_valid_string(value):
             yield Issue(ERROR, path, "text can't contain quotes, backslashes or control characters")
         guid = ref_guid(value)
-        if guid and catalog is not None and guid not in catalog:
+        if guid and catalog is not None and guid not in catalog and guid not in trusted:
             yield Issue(
                 ERROR,
                 path,

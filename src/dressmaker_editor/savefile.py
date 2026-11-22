@@ -21,6 +21,7 @@ MAX_RELATIONSHIP_LEVEL = 5
 DEFAULT_PLAYER_NAME = "Dressmaker"
 
 _REF = re.compile(r"^([0-9a-f]{32}),(.*)$", re.DOTALL)
+_QUOTED_REF = re.compile(r'"([0-9a-f]{32}),')
 
 
 def ref_guid(value: Any) -> str | None:
@@ -104,14 +105,18 @@ def by_member(name: str) -> Callable[[Any], bool]:
 class SaveData:
     """The parsed contents of one ``player*.json`` file."""
 
-    def __init__(self, tree: dict[str, Any]):
+    def __init__(self, tree: dict[str, Any], loaded_guids: frozenset[str] = frozenset()):
         if not isinstance(tree, dict):
             raise ValueError("a save file must be a JSON object")
         self.tree = tree
+        # Asset guids the file referenced when it was read. When the editor only
+        # has its bundled catalog (older than the game), these are trusted: the
+        # game wrote them, so they exist in the installed version.
+        self.loaded_guids = loaded_guids
 
     @classmethod
     def loads(cls, text: str) -> SaveData:
-        return cls(gamejson.loads(text))
+        return cls(gamejson.loads(text), frozenset(_QUOTED_REF.findall(text)))
 
     @classmethod
     def load(cls, path: Path) -> SaveData:
@@ -121,7 +126,7 @@ class SaveData:
         return gamejson.dumps(self.tree)
 
     def copy(self) -> SaveData:
-        return SaveData(copy.deepcopy(self.tree))
+        return SaveData(copy.deepcopy(self.tree), self.loaded_guids)
 
     # ── scalars ───────────────────────────────────────────────────────────
     @property

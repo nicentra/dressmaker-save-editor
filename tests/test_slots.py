@@ -140,3 +140,29 @@ def test_backups_are_pruned(folder, tmp_path):
     for _ in range(4):
         store.backup(folder, 0, "edit")
     assert len(store.list()) == 2
+
+
+def _with_unknown_item(tmp_path):
+    text = (FIXTURES / "fresh.json").read_text(encoding="utf-8")
+    text = text.replace(
+        '"unlockedFabrics" : \n\t[\n',
+        '"unlockedFabrics" : \n\t[\n\t\t"0123456789abcdef0123456789abcdef,FromANewerGame",\n',
+    )
+    path = tmp_path / "newer.json"
+    path.write_bytes(text.encode("utf-8"))
+    return path
+
+
+def test_strict_catalog_rejects_unknown_items_in_imports(folder, backups, catalog, tmp_path):
+    from dressmaker_editor.catalog import Catalog
+
+    strict = Catalog({**catalog.data, "source": {"build_id": "x"}})
+    with pytest.raises(InvalidSaveError):
+        folder.import_file(_with_unknown_item(tmp_path), 2, catalog=strict, backups=backups)
+
+
+def test_bundled_catalog_trusts_items_the_file_already_had(folder, backups, catalog, tmp_path):
+    # The bundled catalog may be older than the game; the game wrote those items.
+    assert catalog.is_bundled
+    folder.import_file(_with_unknown_item(tmp_path), 2, catalog=catalog, backups=backups)
+    assert "FromANewerGame" in folder.slot_path(2).read_text(encoding="utf-8")

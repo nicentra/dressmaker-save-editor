@@ -187,7 +187,8 @@ class SaveFolder:
             raise GameRunningError()
         text = save.dumps()
         reparsed = SaveData.loads(text)  # what the game will read back
-        issues = validate(reparsed.tree, catalog)
+        trusted = save.loaded_guids if catalog is not None and catalog.is_bundled else frozenset()
+        issues = validate(reparsed.tree, catalog, trusted)
         if errors(issues):
             raise InvalidSaveError(issues)
         if backups is not None:
@@ -258,13 +259,15 @@ class SaveFolder:
         atomic_write(destination, buffer.getvalue())
         return destination
 
-    def import_file(self, source: Path, slot: int, **write_args: Any) -> Path:
+    def import_file(
+        self, source: Path, slot: int, *, reason: str = "import", **write_args: Any
+    ) -> Path:
         save, read_thumbnail = read_import(source)
         if read_thumbnail is None:
             # A bare .json: its photos (if any) are this folder's own.
             read_thumbnail = self.read_thumbnail
         save = self.copy_thumbnails(save, read_thumbnail)
-        return self.write(slot, save, reason="import", **write_args)
+        return self.write(slot, save, reason=reason, **write_args)
 
 
 def read_import(source: Path) -> tuple[SaveData, Callable[[str], bytes | None] | None]:
