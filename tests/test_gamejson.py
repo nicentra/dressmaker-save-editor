@@ -105,3 +105,13 @@ def test_unsafe_strings(text):
 
 def test_safe_strings():
     assert gamejson.is_valid_string("Élise's Atelier, est. 1912")
+
+
+def test_tiny_fractions_stay_valid_json():
+    assert format_float(1e-30) == "0.0"
+    assert loads(dumps({"a": 1e-30}))["a"] == 0.0
+
+
+def test_reads_the_games_bare_trailing_dot():
+    text = '{\n\t"a" : 0.,\n\t"b" : "Chapter 1. Begin",\n\t"c" : [2.]\n}'
+    assert loads(text) == {"a": 0.0, "b": "Chapter 1. Begin", "c": [2.0]}

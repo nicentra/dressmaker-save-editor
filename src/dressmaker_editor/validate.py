@@ -172,8 +172,8 @@ def _check_enum(path: str, value: Any, enum_name: str, catalog: Catalog) -> Iter
     if not isinstance(value, str) or "," not in value:
         yield Issue(ERROR, path, f"expected a {enum_name.split('/')[-1]} value")
         return
-    name, _, number = value.partition(",")
-    if name not in members and not number.lstrip("-").isdigit():
+    name = value.partition(",")[0]
+    if name not in members:
         yield Issue(ERROR, path, f"unknown {enum_name.split('/')[-1]} {name!r}")
 
 

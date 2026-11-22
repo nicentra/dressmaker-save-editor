@@ -67,9 +67,21 @@ def loads(text: str) -> Any:
     trip. Strings are taken as the game sees them; the game never writes
     escape sequences, so none are expected.
     """
-    if text.startswith("﻿"):
+    if text.startswith("\ufeff"):
         text = text[1:]
-    return json.loads(text, parse_float=GameFloat, parse_constant=_reject_constant)
+    try:
+        return json.loads(text, parse_float=GameFloat, parse_constant=_reject_constant)
+    except json.JSONDecodeError:
+        # The game writes floats whose fraction rounds away as "0." (see
+        # format_float), which real JSON parsers reject. Read those as "0.0".
+        fixed = _BARE_DOT.sub(lambda m: m.group(0) if m.group(1) else ".0", text)
+        if fixed == text:
+            raise
+        return json.loads(fixed, parse_float=GameFloat, parse_constant=_reject_constant)
+
+
+# A whole string (left alone), or a "." with digits before it and nothing after.
+_BARE_DOT = re.compile(r'("[^"]*")|(?<=[0-9])\.(?=[\s,\]}])')
 
 
 def _reject_constant(name: str) -> Any:
@@ -184,7 +196,9 @@ def format_float(value: float) -> str:
     fraction = to_float32(value - whole)
     if fraction == 0:
         return sign + _fixed(whole, 1)
-    return sign + _fixed(whole, 0) + "." + _fixed(fraction, 29).rstrip("0")[2:]
+    # The game would write "0." when the fraction rounds away at 29 decimals;
+    # "0" keeps the result valid JSON for every reader.
+    return sign + _fixed(whole, 0) + "." + (_fixed(fraction, 29).rstrip("0")[2:] or "0")
 
 
 _BAD_STRING = re.compile(r'["\\\x00-\x1f\x7f]')
