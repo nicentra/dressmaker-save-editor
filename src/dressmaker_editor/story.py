@@ -213,11 +213,14 @@ class Story:
             status, outcome = Status.ACTIVE, None
         else:
             status, outcome = Status.LOCKED, None
+        giver = quest.get("giver")
+        # The final and freeform commissions belong to a placeholder character.
+        placeholder = (self.catalog.get(giver) or {}).get("name") == "Blank"
         return QuestRow(
             guid=guid,
             kind=kind,
             title=self.catalog.pretty(guid),
-            client=self.catalog.pretty(quest.get("giver")),
+            client="" if placeholder else self.catalog.pretty(giver),
             status=status,
             outcome=outcome,
             **extra,
