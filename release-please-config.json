@@ -6,7 +6,18 @@
     ".": {
       "release-type": "python",
       "bump-minor-pre-major": true,
-      "changelog-path": "CHANGELOG.md"
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "src/dressmaker_editor/__init__.py"
+        },
+        {
+          "type": "toml",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name.value=='dressmaker-save-editor')].version"
+        }
+      ]
     }
   }
 }
