@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import __version__
+from .. import full_version
 from ..app_state import AppState
 from ..checks import story_issues
 from ..gamedata import LoadedCatalog
@@ -720,7 +720,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About Dressmaker Save Editor",
-            f"<b>Dressmaker Save Editor</b> {__version__}<br><br>"
+            f"<b>Dressmaker Save Editor</b> {full_version()}<br><br>"
             "An unofficial save editor for Dressmaker. Not affiliated with Cozy Lives.<br>"
             f'<a href="{PROJECT_URL}">{PROJECT_URL}</a><br><br>'
             f"Backups: {self.state.backups.root}",

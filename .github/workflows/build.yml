@@ -4,6 +4,11 @@ name: Build
 
 on:
   workflow_call:
+    inputs:
+      release:
+        description: Build a release (plain version) instead of a development build (+dev.<commit>)
+        type: boolean
+        default: false
   workflow_dispatch:
 
 permissions:
@@ -24,6 +29,8 @@ jobs:
       # release build must not fail if that bump ever lags behind pyproject.toml.
       - run: uv sync --frozen --group build
       - run: uv run python scripts/build_exe.py
+        env:
+          DRESSMAKER_RELEASE: ${{ inputs.release }}
       - name: Self-test the executable
         shell: pwsh
         run: |

@@ -23,7 +23,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from . import __version__, gamejson
+from . import full_version, gamejson
 from .catalog import Catalog
 from .savefile import SaveData
 from .validate import Issue, errors, validate
@@ -317,7 +317,7 @@ class SaveFolder:
         save = SaveData.loads(data.decode("utf-8"))
         manifest = {
             "format": EXPORT_FORMAT,
-            "editor_version": __version__,
+            "editor_version": full_version(),
             "game_build": game_build,
             "exported_at": datetime.now().astimezone().isoformat(timespec="seconds"),
             "slot": slot + 1,

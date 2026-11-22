@@ -17,12 +17,12 @@ def self_test(report: Path) -> int:
     lines: list[str] = []
     code = 0
     try:
-        from dressmaker_editor import __version__
+        from dressmaker_editor import full_version
         from dressmaker_editor.catalog import Catalog
         from dressmaker_editor.story import bundled_template_dress
 
         catalog = Catalog.bundled()
-        lines.append(f"version {__version__}")
+        lines.append(f"version {full_version()}")
         lines.append(
             f"catalog: {len(catalog.assets)} assets, {len(catalog.main_quests)} main quests"
         )

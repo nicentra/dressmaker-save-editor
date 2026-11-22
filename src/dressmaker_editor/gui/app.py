@@ -10,7 +10,7 @@ from logging.handlers import RotatingFileHandler
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from .. import __version__
+from .. import full_version
 from ..app_state import AppState
 from .main_window import MainWindow
 from .widgets import app_icon
@@ -53,12 +53,12 @@ def _excepthook(exc_type, exc, tb) -> None:
 def run(argv: list[str] | None = None) -> int:
     app = QApplication(argv if argv is not None else sys.argv)
     app.setApplicationName("Dressmaker Save Editor")
-    app.setApplicationVersion(__version__)
+    app.setApplicationVersion(full_version())
     app.setWindowIcon(app_icon())
     app.setAttribute(Qt.ApplicationAttribute.AA_DontShowIconsInMenus, False)
     state = AppState()
     _setup_logging(state)
-    log.info("Dressmaker Save Editor %s starting", __version__)
+    log.info("Dressmaker Save Editor %s starting", full_version())
     sys.excepthook = _excepthook
     window = MainWindow(state)
     window.show()
