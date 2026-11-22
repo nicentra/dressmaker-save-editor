@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QBrush, QColor, QFont
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -20,8 +20,7 @@ from PySide6.QtWidgets import (
 from ..catalog import Catalog
 from ..savefile import SaveData
 from ..story import QuestRow, Status, Story
-from .story_tab import STATUS_COLORS
-from .widgets import confirm, humanize
+from .widgets import confirm, humanize, status_brush
 
 GUID_ROLE = Qt.ItemDataRole.UserRole
 
@@ -53,7 +52,7 @@ class QuestsTab(QWidget):
         self.replay.clicked.connect(self._replay)
         self.complete = QPushButton("Mark as done")
         self.complete.clicked.connect(self._complete)
-        self.pay_rewards = QCheckBox("Pay out gold and prestige when marking done")
+        self.pay_rewards = QCheckBox("Pay out gold, prestige and friendship when marking done")
         buttons = QHBoxLayout()
         buttons.addWidget(self.replay)
         buttons.addWidget(self.complete)
@@ -125,7 +124,7 @@ class QuestsTab(QWidget):
         item = QTreeWidgetItem([row.title, row.client, unlocked_by, status])
         item.setData(0, GUID_ROLE, row.guid)
         item.setData(3, GUID_ROLE, row.status)
-        item.setForeground(3, QBrush(QColor(STATUS_COLORS[row.status])))
+        item.setForeground(3, status_brush(row.status))
         return item
 
     def _selected(self) -> list[tuple[str, Status]]:

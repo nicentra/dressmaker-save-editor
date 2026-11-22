@@ -81,6 +81,21 @@ def test_jump_with_rewards_pays_budget_and_prestige(fresh, catalog):
     assert fresh.gold == gold + budgets == gold + changes.gold
     # 6/6 + 6/7 + 6/8 prestige for three successful commissions
     assert fresh.prestige == pytest.approx(1 + 6 / 7 + 6 / 8, rel=1e-5)
+    # and +1 friendship with each client
+    assert changes.friendship == 3
+    for guid in catalog.main_quests[:3]:
+        giver = catalog.quest(guid)["giver"]
+        expected = sum(1 for g in catalog.main_quests[:3] if catalog.quest(g)["giver"] == giver)
+        assert fresh.relationship(giver) == expected
+
+
+def test_gift_rewards_are_friendship_only(fresh, catalog):
+    story = Story(fresh, catalog)
+    gift, character = next(iter(catalog.gift_quests.items()))
+    gold, prestige = fresh.gold, fresh.prestige
+    story.complete(gift, pay_rewards=True)
+    assert (fresh.gold, fresh.prestige) == (gold, prestige)
+    assert fresh.relationship(character) == 1
 
 
 def test_reset_side_quest_makes_it_replayable(midgame, catalog):

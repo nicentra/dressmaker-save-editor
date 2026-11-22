@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -25,15 +24,7 @@ from .. import gamejson
 from ..catalog import Catalog
 from ..savefile import SaveData, by_member
 from ..story import QuestRow, Status, Story
-from .widgets import confirm, humanize
-
-STATUS_COLORS = {
-    Status.COMPLETED: "#2e7d32",
-    Status.ACTIVE: "#1565c0",
-    Status.AVAILABLE: "#8d5a00",
-    Status.LOCKED: "#757575",
-    Status.UPCOMING: "#757575",
-}
+from .widgets import confirm, humanize, status_brush
 
 
 def status_item(row: QuestRow) -> QTableWidgetItem:
@@ -43,7 +34,7 @@ def status_item(row: QuestRow) -> QTableWidgetItem:
     if row.status is Status.AVAILABLE and row.kind in ("main", "final"):
         text = "Next up"
     item = QTableWidgetItem(text)
-    item.setForeground(QBrush(QColor(STATUS_COLORS[row.status])))
+    item.setForeground(status_brush(row.status))
     return item
 
 
@@ -79,7 +70,9 @@ class StoryTab(QWidget):
         self.jump_button.clicked.connect(self._jump_to_selected)
         self.finish_button = QPushButton("Mark the whole story as finished")
         self.finish_button.clicked.connect(self._finish)
-        self.pay_rewards = QCheckBox("Pay out the gold and prestige of commissions marked done")
+        self.pay_rewards = QCheckBox(
+            "Pay out the gold, prestige and friendship of commissions marked done"
+        )
         buttons = QHBoxLayout()
         buttons.addWidget(self.jump_button)
         buttons.addWidget(self.finish_button)
@@ -239,8 +232,11 @@ class StoryTab(QWidget):
                 f"{len(preview.removed)} commission(s) will be cleared, and the dresses you made "
                 "for them removed from your sketchbook."
             )
-        if preview.gold or preview.prestige:
-            details.append(f"You'll get {preview.gold:,} gold and {preview.prestige:.2f} prestige.")
+        if preview.gold or preview.prestige or preview.friendship:
+            details.append(
+                f"You'll get {preview.gold:,} gold, {preview.prestige:.2f} prestige and "
+                "friendship with the clients."
+            )
         target = story.position_label(position)
         if not confirm(
             self,

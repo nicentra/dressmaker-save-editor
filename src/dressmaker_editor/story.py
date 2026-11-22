@@ -28,7 +28,7 @@ from typing import Any
 
 from . import gamejson
 from .catalog import Catalog
-from .savefile import SaveData, ref_guid
+from .savefile import SaveData, by_guid, ref_guid
 
 OUTCOME_ENUM = "QuestDefinition/QuestOutcome"
 SUCCEEDED = "Succeeded"
@@ -61,6 +61,7 @@ class Changes:
     removed: list[str] = field(default_factory=list)
     gold: int = 0
     prestige: float = 0.0
+    friendship: float = 0.0
 
     def __bool__(self) -> bool:
         return bool(self.completed or self.removed)
@@ -385,25 +386,45 @@ class Story:
         return state
 
     def _pay_rewards(self, guid: str, outcome: str, changes: Changes) -> None:
-        """What ``FrontDesk`` pays when a commission is handed in."""
-        if guid in self.catalog.gift_quests or guid == self.catalog.repeating_quest:
-            return
-        save = self.save
-        quest = self.catalog.quest(guid) or {}
+        """What ``FrontDesk.CompleteQuest`` pays when a commission is handed in.
+
+        Success: +1 friendship with the client and, except for gifts, the
+        budget in gold and ``6 / (6 + dresses so far)`` prestige. Failure: the
+        budget (except for gifts), +0.25 friendship and a quarter of the prestige.
+        """
+        if guid == self.catalog.repeating_quest:
+            return  # freeform dresses are sold in the photo studio instead
+        save, catalog = self.save, self.catalog
+        quest = catalog.quest(guid) or {}
         budget = int(quest.get("budget") or 0)
-        succeeded = (
-            self.catalog.outcome_values.get(outcome, 2) >= self.catalog.outcome_values[SUCCEEDED]
-        )
+        gift = guid in catalog.gift_quests
+        succeeded = catalog.outcome_values.get(outcome, 2) >= catalog.outcome_values[SUCCEEDED]
         dresses = sum(
             1
             for s in save.completed_quests
-            if self._state_quest(s) and self._state_quest(s) not in self.catalog.gift_quests
+            if self._state_quest(s) and self._state_quest(s) not in catalog.gift_quests
         )
-        delta = gamejson.to_float32((1.0 if succeeded else 0.25) * 6.0 / (6 + dresses))
-        save.prestige = gamejson.to_float32(save.prestige + delta)
-        save.gold = min(gamejson.INT_MAX, save.gold + budget)
-        changes.gold += budget
-        changes.prestige += delta
+        scale = 6.0 / (6 + dresses)
+        prestige = 0.0
+        if succeeded:
+            friendship = 1.0
+            if not gift:
+                prestige = 1.0 * scale
+        else:
+            friendship = 0.25
+            prestige = 0.25 * scale
+        if not gift:
+            save.gold = min(gamejson.INT_MAX, save.gold + budget)
+            changes.gold += budget
+        if prestige:
+            delta = gamejson.to_float32(prestige)
+            save.prestige = gamejson.to_float32(save.prestige + delta)
+            changes.prestige += delta
+        giver = quest.get("giver")
+        if giver and (catalog.get(giver) or {}).get("name") != "Blank":
+            value = gamejson.to_float32(save.relationship(giver) + friendship)
+            save.relationships.set(catalog.ref(giver), value, by_guid(giver))
+            changes.friendship += friendship
 
 
 def placeholder_dress(save: SaveData, catalog: Catalog) -> dict[str, Any]:
