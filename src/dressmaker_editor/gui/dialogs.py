@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from ..slots import SLOT_COUNT, Backup, BackupStore, SaveFolder, slot_label
-from ..validate import Issue
+from ..validate import ERROR, Issue
 
 
 def describe_slot(folder: SaveFolder, slot: int) -> str:
@@ -182,6 +182,7 @@ class BackupsDialog(QDialog):
 
 
 def show_issues(parent: QWidget, title: str, text: str, issues: list[Issue]) -> None:
+    issues = sorted(issues, key=lambda issue: issue.severity != ERROR)  # errors first
     box = QMessageBox(parent)
     box.setIcon(QMessageBox.Icon.Warning)
     box.setWindowTitle(title)

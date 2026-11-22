@@ -313,6 +313,7 @@ class MainWindow(QMainWindow):
 
     # ── slots ─────────────────────────────────────────────────────────────
     def refresh_slots(self, select_first: bool = False, select: int | None = None) -> None:
+        """Rebuild the slot list, then open ``select`` (or keep the open slot)."""
         folder = self.state.folder
         current = select if select is not None else (self.doc.slot if self.doc else None)
         self.slot_list.blockSignals(True)
@@ -358,7 +359,7 @@ class MainWindow(QMainWindow):
         self.slot_list.blockSignals(False)
         target = current if current is not None else (first_existing if select_first else None)
         if target is not None:
-            self.slot_list.setCurrentRow(target)
+            self._highlight(target)
             if self.doc is None or self.doc.slot != target or select is not None:
                 self._open_slot(target)
         elif self.doc is None:
@@ -371,16 +372,21 @@ class MainWindow(QMainWindow):
         if self.doc is not None and self.doc.slot == row:
             return
         if not self._confirm_discard():
-            self.slot_list.blockSignals(True)
-            self.slot_list.setCurrentRow(self.doc.slot)
-            self.slot_list.blockSignals(False)
+            self._highlight(self.doc.slot)
             return
         self._open_slot(row)
+
+    def _highlight(self, slot: int) -> None:
+        """Select a slot in the list without triggering a slot switch."""
+        self.slot_list.blockSignals(True)
+        self.slot_list.setCurrentRow(slot)
+        self.slot_list.blockSignals(False)
 
     def _open_slot(self, slot: int) -> None:
         folder = self.state.folder
         catalog = self.state.catalog
         self.banners.set("save", None)
+        self._highlight(slot)
         if folder is None or catalog is None:
             return
         if not folder.exists(slot):
@@ -520,7 +526,9 @@ class MainWindow(QMainWindow):
         if answer == QMessageBox.StandardButton.Save:
             return self.save_document()
         if answer == QMessageBox.StandardButton.Discard:
-            self.doc.dirty = False
+            slot = self.doc.slot
+            self.doc = None
+            self._open_slot(slot)  # really drop the edits: reload from disk
             return True
         return False
 

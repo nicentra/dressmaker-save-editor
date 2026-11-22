@@ -94,3 +94,29 @@ def test_saving_is_blocked_while_the_game_runs(window, monkeypatch):
     monkeypatch.setattr(main_window, "game_is_running", lambda: True)
     window._check_game()
     assert not window.save_action.isEnabled()
+
+
+def _answer(monkeypatch, button):
+    monkeypatch.setattr(main_window.QMessageBox, "question", lambda *a, **k: button)
+
+
+def test_saving_while_switching_slots_opens_and_highlights_the_new_slot(
+    window, folder, monkeypatch
+):
+    window.overview.gold.setValue(777)
+    _answer(monkeypatch, main_window.QMessageBox.StandardButton.Save)
+    window.slot_list.setCurrentRow(1)
+    assert folder.read(0).gold == 777
+    assert window.doc.slot == 1
+    assert window.slot_list.currentRow() == 1
+
+
+def test_discarding_really_drops_the_edits(window, folder, monkeypatch):
+    original = folder.read(0).gold
+    window.overview.gold.setValue(999_999)
+    _answer(monkeypatch, main_window.QMessageBox.StandardButton.Discard)
+    monkeypatch.setattr(main_window.QFileDialog, "getOpenFileName", lambda *a, **k: ("", ""))
+    window.import_save()  # discard, then cancel the file dialog
+    assert window.doc.save.gold == original
+    assert not window.doc.dirty
+    assert window.overview.gold.value() == original

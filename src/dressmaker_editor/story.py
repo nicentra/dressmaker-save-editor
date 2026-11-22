@@ -412,7 +412,7 @@ class Story:
                 prestige = 1.0 * scale
         else:
             friendship = 0.25
-            prestige = 0.25 * scale
+            prestige = 0.25 * scale  # yes, even for gifts: the game does the same
         if not gift:
             save.gold = min(gamejson.INT_MAX, save.gold + budget)
             changes.gold += budget
