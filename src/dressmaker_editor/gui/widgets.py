@@ -6,14 +6,43 @@ import re
 from importlib import resources
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QMessageBox, QVBoxLayout, QWidget
+from PySide6.QtGui import QBrush, QColor, QIcon, QPainter, QPalette, QPixmap
+from PySide6.QtWidgets import (
+    QApplication,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QVBoxLayout,
+    QWidget,
+)
 
+from ..story import Status
+
+# (background, text) for light and dark themes.
 BANNER_COLORS = {
-    "info": ("#e8f1fb", "#1d4f7a"),
-    "warning": ("#fff4d6", "#6b4a00"),
-    "error": ("#fde2e1", "#8a1c17"),
+    "info": (("#e8f1fb", "#1d4f7a"), ("#1c3247", "#cfe3f7")),
+    "warning": (("#fff4d6", "#6b4a00"), ("#3d3115", "#ffe3a3")),
+    "error": (("#fde2e1", "#8a1c17"), ("#4a1f1d", "#ffcdc9")),
 }
+STATUS_COLORS = {  # light, dark
+    Status.COMPLETED: ("#2e7d32", "#81c784"),
+    Status.ACTIVE: ("#1565c0", "#64b5f6"),
+    Status.AVAILABLE: ("#8d5a00", "#ffb74d"),
+    Status.LOCKED: ("#757575", "#9e9e9e"),
+    Status.UPCOMING: ("#757575", "#9e9e9e"),
+}
+
+
+def is_dark() -> bool:
+    """Whether the app runs with a dark colour scheme (Windows dark mode)."""
+    app = QApplication.instance()
+    palette = app.palette() if app is not None else QPalette()
+    return palette.color(QPalette.ColorRole.Window).lightness() < 128
+
+
+def status_brush(status: Status) -> QBrush:
+    return QBrush(QColor(STATUS_COLORS[status][1 if is_dark() else 0]))
 
 
 def app_icon() -> QIcon:
@@ -47,7 +76,7 @@ class Banner(QFrame):
         self.hide()
 
     def show_message(self, kind: str, html: str) -> None:
-        background, text = BANNER_COLORS[kind]
+        background, text = BANNER_COLORS[kind][1 if is_dark() else 0]
         self.setStyleSheet(
             f"Banner {{ background: {background}; border-radius: 6px; }}QLabel {{ color: {text}; }}"
         )
@@ -82,10 +111,11 @@ class BannerStack(QWidget):
 
 
 def placeholder_pixmap(size: int, text: str = "No photo") -> QPixmap:
+    background, ink = ("#3a3532", "#a89c92") if is_dark() else ("#f3ece6", "#9a8b80")
     pixmap = QPixmap(size, size)
-    pixmap.fill(QColor("#f3ece6"))
+    pixmap.fill(QColor(background))
     painter = QPainter(pixmap)
-    painter.setPen(QColor("#9a8b80"))
+    painter.setPen(QColor(ink))
     painter.drawRect(0, 0, size - 1, size - 1)
     painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, text)
     painter.end()
