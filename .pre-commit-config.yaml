@@ -9,6 +9,8 @@
 exclude: ^(tests/fixtures/|src/dressmaker_editor/data/.*\.json$)
 default_install_hook_types: [pre-commit, pre-push]
 default_stages: [pre-commit]
+default_language_version:
+  python: python3.15  # hooks parse our code, so they need its Python version
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
