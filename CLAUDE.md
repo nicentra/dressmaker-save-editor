@@ -1,6 +1,6 @@
 # Dressmaker Save Editor
 
-Python 3.13 + PySide6 save editor for the Unity game Dressmaker. Read
+Python 3.15 + PySide6 save editor for the Unity game Dressmaker. Read
 CONTRIBUTING.md first: it explains the save format and the game's loader, and
 every rule there exists because breaking it makes the game discard a save.
 

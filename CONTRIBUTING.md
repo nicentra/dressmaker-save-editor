@@ -2,6 +2,10 @@
 
 ## Setup
 
+The project runs on Python 3.15 (uv installs it). UnityPy and lz4 have no
+3.15 wheels yet, so `uv sync` compiles them: on Windows that needs the Visual
+Studio Build Tools with the C++ workload. CI has them built in.
+
 ```sh
 uv sync
 uv run pre-commit install      # ruff, workflow linters, typos …; pytest on push

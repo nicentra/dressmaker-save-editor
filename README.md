@@ -79,7 +79,11 @@ happy, is described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Building from source
 
-You need [uv](https://docs.astral.sh/uv/). Then:
+You need [uv](https://docs.astral.sh/uv/), which also fetches Python 3.15. Two
+dependencies (UnityPy and lz4) don't publish Python 3.15 wheels yet and are
+compiled during `uv sync`, so on Windows install the
+[Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+with the "Desktop development with C++" workload first. Then:
 
 ```sh
 uv sync
