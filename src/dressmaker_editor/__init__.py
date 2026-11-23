@@ -1,6 +1,6 @@
 """Save editor for the game Dressmaker."""
 
-__version__ = "1.0.0"  # x-release-please-version
+__version__ = "1.0.1"  # x-release-please-version
 
 
 def full_version() -> str:
