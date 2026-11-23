@@ -117,6 +117,95 @@ def test_complete_side_quest(midgame, catalog):
     assert errors(validate(reload(midgame).tree, catalog)) == []
 
 
+def test_client_order_matches_the_pigeon(fresh, catalog):
+    """Play through the story, accepting whatever the pigeon offers as soon as it does."""
+    story = Story(fresh, catalog)
+    brought: dict[str, list[str]] = {}
+    for position in range(len(catalog.main_quests) + 1):
+        story.jump_to(position)
+        while story.feature_unlocked("pigeon"):
+            offers: dict[str, str] = {}  # MessengerPigeonUI.Show: one button per client
+            for guid in catalog.side_quests:
+                giver = catalog.quest(guid)["giver"]
+                if not story.is_completed(guid) and story.requirements_met(guid):
+                    offers.setdefault(giver, guid)
+            if not offers:
+                break
+            for giver, guid in offers.items():
+                assert story.complete(guid).completed == [guid]
+                brought.setdefault(giver, []).append(guid)
+    assert sorted(g for chain in brought.values() for g in chain) == sorted(catalog.side_quests)
+    for chain in brought.values():
+        assert story.client_side_quests(chain[0]) == chain
+    assert sorted(story.side_quests()) == sorted(catalog.side_quests)
+
+
+def _first_chain(story: Story, catalog, length: int) -> list[str]:
+    return next(
+        chain
+        for chain in map(story.client_side_quests, catalog.side_quests)
+        if len(chain) >= length
+    )
+
+
+def test_replaying_a_side_quest_clears_the_clients_later_ones(fresh, catalog):
+    story = Story(fresh, catalog)
+    story.jump_to(len(catalog.main_quests))
+    first, second, third = _first_chain(story, catalog, 3)[:3]
+    for guid in (first, second, third):
+        story.complete(guid)
+    assert story.replay_targets(second) == [second, third]
+    assert story.replay(second) == [second, third]
+    assert story.is_completed(first)
+    assert not story.is_completed(second) and not story.is_completed(third)
+    assert errors(validate(reload(fresh).tree, catalog)) == []
+
+
+def test_replaying_also_abandons_a_later_side_quest_in_progress(fresh, catalog):
+    story = Story(fresh, catalog)
+    story.jump_to(len(catalog.main_quests))
+    first, second = _first_chain(story, catalog, 2)[:2]
+    story.complete(first)
+    fresh.active_commissions.append(
+        {"questDefinition": catalog.ref(second), "outcome": "NotCompleted,0", "dress": None}
+    )
+    fresh.active_commission_index = 0
+    assert story.replay(first) == [first, second]
+    assert fresh.active_commissions == []
+    assert fresh.active_commission_index == -1
+
+
+def test_replaying_a_main_quest_clears_only_that_quest(midgame, catalog):
+    story = Story(midgame, catalog)
+    guid = catalog.main_quests[3]
+    assert story.replay_targets(guid) == [guid]
+    assert story.replay(guid) == [guid]
+    assert story.position() == 3
+
+
+def test_marking_a_side_quest_done_completes_the_clients_earlier_ones(fresh, catalog):
+    story = Story(fresh, catalog)
+    story.jump_to(len(catalog.main_quests))
+    first, second, third = _first_chain(story, catalog, 3)[:3]
+    assert story.complete_targets(second) == [first, second]
+    assert story.complete(second).completed == [first, second]
+    assert story.complete_targets(third) == [third]
+    assert story.complete(third, "Failed").completed == [third]
+    assert story.is_completed(first)
+    assert story.outcome_name(story.completed_state(first)) == "Succeeded"
+    assert story.outcome_name(story.completed_state(third)) == "Failed"
+
+
+def test_marking_done_out_of_order_pays_for_every_commission(fresh, catalog):
+    story = Story(fresh, catalog)
+    story.jump_to(len(catalog.main_quests))
+    chain = _first_chain(story, catalog, 3)
+    gold = fresh.gold
+    changes = story.complete(chain[-1], pay_rewards=True)
+    assert changes.completed == chain
+    assert fresh.gold == gold + sum(catalog.quest(g)["budget"] for g in chain)
+
+
 def test_complete_gift_quest_sets_recipient(fresh, catalog):
     story = Story(fresh, catalog)
     gift = next(iter(catalog.gift_quests))

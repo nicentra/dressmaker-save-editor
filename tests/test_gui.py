@@ -145,3 +145,50 @@ def test_marking_a_locked_commission_done_asks_first(window, monkeypatch):
     item.setSelected(True)
     window.quests._complete()
     assert not window.doc.dirty
+
+
+def _quest_item(window, guid):
+    tree = window.quests.tree
+    for group in range(tree.topLevelItemCount()):
+        parent = tree.topLevelItem(group)
+        for i in range(parent.childCount()):
+            if parent.child(i).data(0, quests_tab.GUID_ROLE) == guid:
+                return parent.child(i)
+    raise AssertionError(guid)
+
+
+def _client_chain(story, catalog):
+    return next(
+        chain for chain in map(story.client_side_quests, catalog.side_quests) if len(chain) >= 3
+    )
+
+
+def test_replaying_names_the_later_commissions_it_clears(window, catalog, monkeypatch):
+    window.slot_list.setCurrentRow(0)
+    story = Story(window.doc.save, catalog)
+    story.jump_to(len(catalog.main_quests))
+    chain = _client_chain(story, catalog)
+    story.complete(chain[-1])
+    window.quests.refresh()
+    asked = []
+    monkeypatch.setattr(quests_tab, "confirm", lambda _p, _t, text, *a: asked.append(text) or True)
+    _quest_item(window, chain[0]).setSelected(True)
+    window.quests._replay()
+    assert window.doc.dirty
+    assert all(catalog.pretty(g) in asked[0] for g in chain)
+    assert not any(story.is_completed(g) for g in chain)
+
+
+def test_marking_done_names_the_earlier_commissions_it_completes(window, catalog, monkeypatch):
+    window.slot_list.setCurrentRow(0)
+    story = Story(window.doc.save, catalog)
+    story.jump_to(len(catalog.main_quests))
+    window.quests.refresh()
+    chain = _client_chain(story, catalog)
+    asked = []
+    monkeypatch.setattr(quests_tab, "confirm", lambda _p, _t, text, *a: asked.append(text) or True)
+    _quest_item(window, chain[-1]).setSelected(True)
+    window.quests._complete()
+    assert all(catalog.pretty(g) in asked[0] for g in chain[:-1])
+    assert "not unlocked" not in asked[0]
+    assert all(story.is_completed(g) for g in chain)

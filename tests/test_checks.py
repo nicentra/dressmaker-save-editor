@@ -84,8 +84,10 @@ def test_fix_all_handles_several_problems(midgame, catalog):
         for g in catalog.side_quests
         if catalog.main_quests.index(Story(midgame, catalog).unlocked_by(g)) >= 16
     )
-    story.complete(later)
-    assert len(story_issues(midgame, catalog)) == 3
+    # the gap, the duplicate, and each locked side commission marked done
+    # (the client's earlier ones are marked done with it)
+    marked = story.complete(later).completed
+    assert len(story_issues(midgame, catalog)) == 2 + len(marked)
     fix_all(midgame, catalog)
     assert messages(midgame, catalog) == []
     assert errors(validate(midgame.tree, catalog)) == []

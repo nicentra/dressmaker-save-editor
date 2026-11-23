@@ -32,7 +32,9 @@ repository.
   You can also finish the whole story, and change the story flags and variables
   that conversations set.
 - **Replay side commissions.** Clear any side or gift commission so the
-  messenger pigeon brings it again, or mark commissions as done.
+  messenger pigeon brings it again, or mark commissions as done. Each client's
+  pigeon commissions stay in order: clearing one also clears that client's
+  later ones, and marking one done also marks the earlier ones done.
 - **Story check.** Spots progress that normal play can't reach (a side
   commission done before the one that unlocks it, a gap in the main story, a
   commission listed twice) and fixes it in one click.
