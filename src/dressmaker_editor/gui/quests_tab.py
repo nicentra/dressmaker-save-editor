@@ -62,8 +62,10 @@ class QuestsTab(QWidget):
         help_text = QLabel(
             "Replaying a commission removes it, and the dress you made for it, from your "
             "save. The messenger pigeon brings a side commission again once it is unlocked "
-            "and that client has no other commission open. Gold, prestige and friendship "
-            "you earned from it are kept. Select several rows to change them at once."
+            "and that client has no other commission open. Each client's side commissions "
+            "come in order, so replaying one also clears that client's later ones, and "
+            "marking one done also marks the earlier ones done. Gold, prestige and "
+            "friendship you earned are kept. Select several rows to change them at once."
         )
         help_text.setWordWrap(True)
         help_text.setStyleSheet("color: palette(placeholder-text);")
@@ -139,45 +141,70 @@ class QuestsTab(QWidget):
         self.replay.setEnabled(any(s in (Status.COMPLETED, Status.ACTIVE) for _g, s in selected))
         self.complete.setEnabled(any(s is not Status.COMPLETED for _g, s in selected))
 
+    def _names(self, guids: list[str]) -> str:
+        names = [self.catalog.pretty(g) for g in guids[:5]]
+        if len(guids) > 5:
+            return f"{', '.join(names)} and {len(guids) - 5} more"
+        if len(names) > 1:
+            return f"{', '.join(names[:-1])} and {names[-1]}"
+        return names[0]
+
     def _replay(self) -> None:
         targets = [g for g, s in self._selected() if s in (Status.COMPLETED, Status.ACTIVE)]
         if not targets:
             return
-        names = ", ".join(self.catalog.pretty(g) for g in targets[:5])
-        more = f" and {len(targets) - 5} more" if len(targets) > 5 else ""
+        story = Story(self.save, self.catalog)
+        cleared = list(dict.fromkeys(g for t in targets for g in story.replay_targets(t)))
+        later = [g for g in cleared if g not in targets]
+        text = f"Clear the progress of {self._names(targets)}?"
+        if later:
+            text += (
+                f" The pigeon brings each client's commissions in order, so this also clears "
+                f"{self._names(later)}."
+            )
         if not confirm(
             self,
             "Replay commissions",
-            f"Clear the progress of {names}{more}?",
+            text,
             "Clear progress",
             "The dresses you made for them are removed from your sketchbook. "
             "Nothing is written until you save.",
         ):
             return
-        story = Story(self.save, self.catalog)
         for guid in targets:
-            story.reset(guid)
+            story.replay(guid)
         self.edited.emit()
 
     def _complete(self) -> None:
         targets = [g for g, s in self._selected() if s is not Status.COMPLETED]
         if not targets:
             return
-        locked = [g for g, s in self._selected() if s is Status.LOCKED]
-        if locked:
-            names = ", ".join(self.catalog.pretty(g) for g in locked[:5])
-            more = f" and {len(locked) - 5} more" if len(locked) > 5 else ""
-            verb = "are" if len(locked) > 1 else "is"
+        story = Story(self.save, self.catalog)
+        marked = list(dict.fromkeys(g for t in targets for g in story.complete_targets(t)))
+        earlier = [g for g in marked if g not in targets]
+        locked = [g for g in marked if not (story.is_active(g) or story.is_unlocked(g))]
+        if earlier or locked:
+            parts = []
+            if earlier:
+                parts.append(
+                    "The pigeon brings each client's commissions in order, so this also "
+                    f"marks {self._names(earlier)} as done."
+                )
+            if locked:
+                verb = "are" if len(locked) > 1 else "is"
+                parts.append(f"{self._names(locked)} {verb} not unlocked in this save's story yet.")
+                question = "Mark done anyway?"
+                detail = (
+                    "Normal play can't get there, so the story check will list them until "
+                    "the commissions that unlock them are done too."
+                )
+            else:
+                question = "Mark them all done?"
+                detail = "Nothing is written until you save."
             if not confirm(
-                self,
-                "Mark locked commissions done",
-                f"{names}{more} {verb} not unlocked in this save's story yet. Mark done anyway?",
-                "Mark done",
-                "Normal play can't get there, so the story check will list them until the "
-                "commissions that unlock them are done too.",
+                self, "Mark commissions done", f"{' '.join(parts)} {question}", "Mark done", detail
             ):
                 return
-        story = Story(self.save, self.catalog)
         for guid in targets:
             story.complete(guid, pay_rewards=self.pay_rewards.isChecked())
         self.edited.emit()
