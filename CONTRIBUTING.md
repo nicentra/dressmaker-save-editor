@@ -89,7 +89,12 @@ Story:
   quest that is neither completed nor active; after all of them comes
   `FinalQuest`.
 - Side quests come by messenger pigeon once their storylet requirements are
-  met and the client has no other open commission. Gift quests unlock with
+  met and the client has no other open commission. The pigeon offers each
+  client only the first of their side quests in the campaign's `sideQuests`
+  list that is unlocked and not done, so a client's side quests come one at a
+  time. The editor treats them as a chain (`Story.client_side_quests`):
+  replaying one clears the later ones, marking one done completes the earlier
+  ones. Gift quests unlock with
   gifting. Unlocks: gifting after VivianArtShow, freeform dresses after
   PriyaFuneral, the pigeon after DorothyBerty (in build 26043449).
 - A quest is done when `completedQuests` has an entry for it. Completed

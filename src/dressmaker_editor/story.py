@@ -8,7 +8,11 @@ How the game decides what comes next (from its ``FrontDesk`` and
   them are done, the knighthood letter starts the final quest.
 * Side quests come by messenger pigeon once their requirements are met,
   usually "finished main quest X", and only while the same client has no
-  other commission open.
+  other commission open. The pigeon offers each client only the first of
+  their side quests (in the campaign's list) that is unlocked and not done, so
+  a client's side quests come one after another. The editor keeps that order:
+  replaying one also clears the client's later ones, and marking one done
+  also completes the earlier ones.
 * A quest counts as done when ``completedQuests`` holds an entry for it, so
   completing a quest means adding an entry and replaying one means removing it.
 
@@ -285,7 +289,57 @@ class Story:
         return self._unlocking_quest(guid)
 
     def side_quests(self) -> list[str]:
-        return self.catalog.side_quests
+        """Side quests grouped by client, each client's in the order they come."""
+        ordered: list[str] = []
+        for guid in self.catalog.side_quests:
+            if guid not in ordered:
+                ordered.extend(self.client_side_quests(guid))
+        return ordered
+
+    def client_side_quests(self, guid: str) -> list[str]:
+        """The side quests of ``guid``'s client, in the order the pigeon brings them.
+
+        The pigeon offers the first one in the campaign's list that is unlocked
+        and not done yet. Played as they unlock, a client's side quests come in
+        the order they become available (after the main quest that unlocks
+        them, but not before the pigeon), and ones that become available
+        together come in list order. Empty if ``guid`` isn't a side quest.
+        """
+        if guid not in self.catalog.side_quests:
+            return []
+        giver = (self.catalog.quest(guid) or {}).get("giver")
+        if not giver:
+            return [guid]
+        main = {g: i for i, g in enumerate(self.main_quests)}
+        pigeon = main.get((self.catalog.unlock("pigeon") or {}).get("quest"), -1)
+        quests = [
+            g
+            for g in self.catalog.side_quests
+            if (self.catalog.quest(g) or {}).get("giver") == giver
+        ]
+        # sorted() is stable, so quests available together keep their list order.
+        return sorted(
+            quests, key=lambda g: max(main.get(self._unlocking_quest(g), len(main)), pigeon)
+        )
+
+    def _before_and_after(self, guid: str) -> tuple[list[str], list[str]]:
+        chain = self.client_side_quests(guid)
+        if guid not in chain:
+            return [], []
+        i = chain.index(guid)
+        return chain[:i], chain[i + 1 :]
+
+    def replay_targets(self, guid: str) -> list[str]:
+        """What :meth:`replay` clears: the quest and, for a side quest, the
+        client's later side quests that are done or in progress."""
+        _before, after = self._before_and_after(guid)
+        return [guid, *(g for g in after if self.is_completed(g) or self.is_active(g))]
+
+    def complete_targets(self, guid: str) -> list[str]:
+        """What :meth:`complete` marks done: the quest and, for a side quest,
+        the client's earlier side quests that aren't done yet."""
+        before, _after = self._before_and_after(guid)
+        return [*(g for g in before if not self.is_completed(g)), guid]
 
     def _unlocking_quest(self, guid: str) -> str | None:
         quest = self.catalog.quest(guid) or {}
@@ -346,11 +400,25 @@ class Story:
     def complete(
         self, guid: str, outcome: str = SUCCEEDED, *, pay_rewards: bool = False
     ) -> Changes:
-        """Mark one quest as done, as if the player had delivered the dress."""
+        """Mark a quest as done, as if the player had delivered the dress.
+
+        For a side quest, the client's earlier side quests are marked done
+        (successfully) first, since the pigeon only brings them in order.
+        """
         changes = Changes()
-        if not self.is_completed(guid):
-            self._complete(guid, outcome, pay_rewards, changes)
+        for target in self.complete_targets(guid):
+            if not self.is_completed(target):
+                result = outcome if target == guid else SUCCEEDED
+                self._complete(target, result, pay_rewards, changes)
         return changes
+
+    def replay(self, guid: str) -> list[str]:
+        """Clear a quest so it can be played again (see :meth:`reset`).
+
+        For a side quest, the client's later side quests are cleared too, so
+        the pigeon brings them again in order. Returns the quests it cleared.
+        """
+        return [target for target in self.replay_targets(guid) if self.reset(target)]
 
     def reset(self, guid: str) -> bool:
         """Forget a quest entirely, so the game offers it again when its turn comes.
