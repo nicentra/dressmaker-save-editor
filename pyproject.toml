@@ -1,6 +1,6 @@
 [project]
 name = "dressmaker-save-editor"
-version = "1.0.0"
+version = "1.0.1"
 description = "Save editor for the game Dressmaker"
 readme = "README.md"
 license = "MIT"
