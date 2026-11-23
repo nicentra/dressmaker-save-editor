@@ -3,6 +3,9 @@
 An unofficial save editor for [Dressmaker](https://store.steampowered.com/app/4019220/Dressmaker/)
 by Cozy Lives. It is not affiliated with or endorsed by the developers.
 
+> **Note:** This is purely vibe-coded slop that I made for my own use. It does
+> what I need it to, but it's nothing more than that.
+
 ![The Story tab](docs/screenshot.png)
 
 ## Download
